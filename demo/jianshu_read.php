@@ -37,29 +37,11 @@ $result = array_map(function ($e)use($referer){
 //玩下fork
 
 $num = 4;
+$runTimes = 7200;
 if(count($result) < $num){
     $num = count($result);
 }
 var_dump($num);
-
-umask(0);
-$pid = pcntl_fork();
-if ( $pid < 0 ) {
-    exit( ' fork error. ' );
-} else if( $pid > 0 ) {
-    exit( ' parent process. ' );
-}
-// 将当前子进程提升会会话组组长 这是至关重要的一步
-if ( ! posix_setsid() ) {
-    exit( ' setsid error. ' );
-}
-// 二次fork
-$pid = pcntl_fork();
-if( $pid < 0 ){
-    exit( ' fork error. ' );
-} else if( $pid > 0 ) {
-    exit( ' parent process. ' );
-}
 
 for ($i = 0;$i<$num;$i++){
 
@@ -75,7 +57,7 @@ for ($i = 0;$i<$num;$i++){
         pcntl_signal_dispatch();
 
     }elseif(0 == $pid){
-        $time = time() + 600;
+        $time = time() + $runTimes;
         while(time() < $time){
             $url = toSee($i,$result,$num);
             file_put_contents('debug.json',json_encode($url).PHP_EOL,FILE_APPEND);
@@ -89,7 +71,6 @@ for ($i = 0;$i<$num;$i++){
     }
 }
 function toSee(int $i,array $result,int $num){
-    $ulas = "https://www.jianshu.com/notes/%s/mark_viewed.json";
     $referer = "https://www.jianshu.com/u/6b1fa1764b51";
     $url = [];
     $reNums = count($result);
@@ -103,7 +84,7 @@ function toSee(int $i,array $result,int $num){
 
     }
     foreach ($url as $key) {
-
+        $ulas = "https://www.jianshu.com/notes/%s/mark_viewed.json";
         $res = requests::get($key['referer']);
 
         $path = "/html/body/script[1]/text()";
@@ -119,7 +100,6 @@ function toSee(int $i,array $result,int $num){
         echo $ulas.PHP_EOL;
         requests::set_referer($key['referer']);//必须将referer调成当前页面
         requests::post($ulas,json_encode($data));
-        break;
     }
     return $url;
 }
