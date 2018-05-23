@@ -21,9 +21,17 @@ requests::set_referer($referer);
 requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
-
-
+$ips = getPoxyIp();
+resend:
+requests::set_proxy($ips);
 $html = requests::get($url);
+if (!empty(requests::$error) || !$html) {
+    requests::$error = '';
+    $ips = getPoxyIp();
+    goto resend;
+}
+
+
 
 $result = selector::select($html,'//div[@class="content"]/a/@href');
 $readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
@@ -41,7 +49,6 @@ $result = array_map(function ($e)use($referer,&$reads){
     $ref = $referer.$e;
     return ['word'=>$word,'referer'=>$ref,'reads'=>array_pop($reads)];
 },(array)$result);
-$ips = getPoxyIp();
 //玩下fork
 
 $num = 1;
@@ -78,7 +85,7 @@ for ($i = 0;$i<$num;$i++){
         echo 'fork error';
     }
 }
-function toSee(int $i,array $result,int $num,string $ip){
+function toSee(int $i,array $result,int $num,string $ip = ""){
     $referer = "https://www.jianshu.com/u/6b1fa1764b51";
     $url = [];
     do{
@@ -102,22 +109,22 @@ function toSee(int $i,array $result,int $num,string $ip){
         ];
         $ulas = sprintf($ulas,$key['word']);
        // echo $ulas.PHP_EOL;
-        requests::$error = '';
-        resend:
+        //requests::$error = '';
+        //resend:
         echo $ip.PHP_EOL;
         requests::set_timeout(10);
-        requests::set_proxy($ip);
+        //requests::set_proxy($ip);
 
         requests::set_referer($key['referer']);//必须将referer调成当前页面
 
         requests::post($ulas,json_encode($data));
 
-        if(!empty(requests::$error)){
-            echo requests::$error.PHP_EOL;
-            requests::$error = '';
-            $ip = getPoxyIp();
-            goto resend;
-        }
+//        if(!empty(requests::$error)){
+//            echo requests::$error.PHP_EOL;
+//            requests::$error = '';
+//            $ip = getPoxyIp();
+//            goto resend;
+//        }
         break;
     }
     return $url;
