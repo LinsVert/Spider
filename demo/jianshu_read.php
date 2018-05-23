@@ -26,18 +26,26 @@ requests::set_useragent($userAgent);
 $html = requests::get($url);
 
 $result = selector::select($html,'//div[@class="content"]/a/@href');
+$readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
+$reads = [];
+for($i = 1;$i<count($readList);$i +=4){
+    if(isset($readList[$i])) {
+        $reads[] = $readList[$i];
+    }
+}
+$reads = array_reverse($reads);
 
-$result = array_map(function ($e)use($referer){
+$result = array_map(function ($e)use($referer,&$reads){
     $word = explode('/',$e);
     $word = $word[2];
     $ref = $referer.$e;
-    return ['word'=>$word,'referer'=>$ref];
+    return ['word'=>$word,'referer'=>$ref,'reads'=>array_pop($reads)];
 },(array)$result);
-
+$ips = getPoxyIp();
 //玩下fork
 
-$num = 4;
-$runTimes = 7200;
+$num = 1;
+$runTimes = 1;
 if(count($result) < $num){
     $num = count($result);
 }
@@ -59,10 +67,10 @@ for ($i = 0;$i<$num;$i++){
     }elseif(0 == $pid){
         $time = time() + $runTimes;
         while(time() < $time){
-            $url = toSee($i,$result,$num);
+            $url = toSee($i,$result,$num,$ips);
             file_put_contents('debug.json',json_encode($url).PHP_EOL,FILE_APPEND);
 
-            sleep(rand(1,5));
+            sleep(rand(1,1));
         }
         echo $pid."*$i run finished ".date('Y-m-d H:i:s').PHP_EOL;
         exit;
@@ -70,19 +78,15 @@ for ($i = 0;$i<$num;$i++){
         echo 'fork error';
     }
 }
-function toSee(int $i,array $result,int $num){
+function toSee(int $i,array $result,int $num,string $ip){
     $referer = "https://www.jianshu.com/u/6b1fa1764b51";
     $url = [];
-    $reNums = count($result);
-    if ($reNums == $num){
+    do{
         $url[] = $result[$i];
-    }else {
-        do{
-            $url[] = $result[$i];
-            $i = $i+$num;
-        }while(isset($result[$i]));
+        $i = $i+$num;
+    }while(isset($result[$i]));
 
-    }
+
     foreach ($url as $key) {
         $ulas = "https://www.jianshu.com/notes/%s/mark_viewed.json";
         $res = requests::get($key['referer']);
@@ -97,9 +101,41 @@ function toSee(int $i,array $result,int $num){
             'uuid' => $ress->note_show->uuid
         ];
         $ulas = sprintf($ulas,$key['word']);
-        echo $ulas.PHP_EOL;
+       // echo $ulas.PHP_EOL;
+        requests::$error = '';
+        resend:
+        echo $ip.PHP_EOL;
+        requests::set_timeout(10);
+        requests::set_proxy($ip);
+
         requests::set_referer($key['referer']);//必须将referer调成当前页面
+
         requests::post($ulas,json_encode($data));
+
+        if(!empty(requests::$error)){
+            echo requests::$error.PHP_EOL;
+            requests::$error = '';
+            $ip = getPoxyIp();
+            goto resend;
+        }
+        break;
     }
     return $url;
+}
+function getPoxyIp(){
+    do{
+        $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
+        requests::set_timeout(60);
+        try{
+            $poxy = requests::get($poxy_url);
+        }catch(Exception $e){
+            var_dump($e);
+            requests::$error;
+        }
+
+        $poxy = json_decode($poxy);
+    }while($poxy->code != 0);
+    $ips = $poxy->data->ip . ":" . $poxy->data->port;
+
+    return $ips;
 }
