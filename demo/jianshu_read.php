@@ -21,10 +21,12 @@ requests::set_referer($referer);
 requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
+//拿列表页会被封，需要代理下
 $ips = getPoxyIp();
 resend:
 requests::set_proxy($ips);
 $html = requests::get($url);
+var_dump(requests::$error);
 if (!empty(requests::$error) || !$html) {
     requests::$error = '';
     $ips = getPoxyIp();
@@ -51,8 +53,8 @@ $result = array_map(function ($e)use($referer,&$reads){
 },(array)$result);
 //玩下fork
 
-$num = 1;
-$runTimes = 1;
+$num = 4;
+$runTimes = 3400;
 if(count($result) < $num){
     $num = count($result);
 }
@@ -125,7 +127,7 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
 //            $ip = getPoxyIp();
 //            goto resend;
 //        }
-        break;
+        //break;
     }
     return $url;
 }
