@@ -135,7 +135,7 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
         }
         echo 'Success Post '.date('Y-m-d H:i:s').':'.PHP_EOL;
         $ip = isset($ip) ?: '127.0.0.1';
-        echo "Ip: $ip";
+        echo "Ip: $ip".PHP_EOL;
     }
     return $url;
 }
@@ -153,5 +153,7 @@ function getPoxyIp(){
         $poxy = json_decode($poxy);
     }while($poxy->code != 0);
     $ips = $poxy->data->ip . ":" . $poxy->data->port;
+    echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
+    echo $ips.PHP_EOL;
     return $ips;
 }
