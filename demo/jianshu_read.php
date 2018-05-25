@@ -22,24 +22,30 @@ requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
 //拿列表页会被封，需要代理下
-$ips = getPoxyIp();
-resend:
-requests::set_proxy($ips);
-$html = requests::get($url);
-var_dump(requests::$error);
-if (!empty(requests::$error) || !$html) {
-    echo "Error ".date('Y-m-d H:i:s').": ".PHP_EOL;
-    $err = !$html ? "ip $ips abandon" : requests::$error;
-    var_dump($err);
-    echo "*****".PHP_EOL;
-    requests::$error = '';
+$file = "temp.html";
+//临时解决方案
+if(!file_exists($file)) {
     $ips = getPoxyIp();
-    goto resend;
+    resend:
+    requests::set_proxy($ips);
+    $html = requests::get($url);
+    var_dump(requests::$error);
+    if (!empty(requests::$error) || !$html) {
+        echo "Error " . date('Y-m-d H:i:s') . ": " . PHP_EOL;
+        $err = !$html ? "ip $ips abandon" : requests::$error;
+        var_dump($err);
+        echo "*****" . PHP_EOL;
+        requests::$error = '';
+        $ips = getPoxyIp();
+        goto resend;
+    }
+    file_put_contents($file,$html);
+}else {
+    $html = file_get_contents($file);
 }
-
-
-
 $result = selector::select($html,'//div[@class="content"]/a/@href');
+var_dump($result);
+exit;
 $readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
 $reads = [];
 for($i = 1;$i<count($readList);$i +=4){
@@ -142,7 +148,7 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
 function getPoxyIp(){
     do{
         $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
-        requests::set_timeout(10);
+        requests::set_timeout(20);
         $poxy = requests::get($poxy_url);
         if (!$poxy) {
             echo "GetIp Error ".date('Y-m-d H:i:s').":".PHP_EOL;
@@ -151,7 +157,9 @@ function getPoxyIp(){
             $poxy = '{"code":1}';
         }
         $poxy = json_decode($poxy);
-    }while($poxy->code != 0);
+        sleep(rand(1,2));
+    }while(true);
+
     $ips = $poxy->data->ip . ":" . $poxy->data->port;
     echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
     echo $ips.PHP_EOL;
