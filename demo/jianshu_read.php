@@ -28,6 +28,10 @@ requests::set_proxy($ips);
 $html = requests::get($url);
 var_dump(requests::$error);
 if (!empty(requests::$error) || !$html) {
+    echo "Error ".date('Y-m-d H:i:s').": ".PHP_EOL;
+    $err = !$html ? "ip $ips abandon" : requests::$error;
+    var_dump($err);
+    echo "*****".PHP_EOL;
     requests::$error = '';
     $ips = getPoxyIp();
     goto resend;
@@ -53,8 +57,8 @@ $result = array_map(function ($e)use($referer,&$reads){
 },(array)$result);
 //玩下fork
 
-$num = 4;
-$runTimes = 3400;
+$num = 1;
+$runTimes = 1;
 if(count($result) < $num){
     $num = count($result);
 }
@@ -113,38 +117,41 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
        // echo $ulas.PHP_EOL;
         //requests::$error = '';
         //resend:
-        echo $ip.PHP_EOL;
+
         requests::set_timeout(10);
         //requests::set_proxy($ip);
 
         requests::set_referer($key['referer']);//必须将referer调成当前页面
-
+        rePost:
         requests::post($ulas,json_encode($data));
 
-//        if(!empty(requests::$error)){
-//            echo requests::$error.PHP_EOL;
-//            requests::$error = '';
-//            $ip = getPoxyIp();
-//            goto resend;
-//        }
-        //break;
+        if(!empty(requests::$error)){
+            echo "Post Error ".date('Y-m-d H:i:s').":".PHP_EOL;
+            echo requests::$error.PHP_EOL;
+            requests::$error = '';
+            $ip = getPoxyIp();
+            requests::set_proxy($ip);
+            goto rePost;
+        }
+        echo 'Success Post '.date('Y-m-d H:i:s').':'.PHP_EOL;
+        $ip = isset($ip) ?: '127.0.0.1';
+        echo "Ip: $ip";
     }
     return $url;
 }
 function getPoxyIp(){
     do{
         $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
-        requests::set_timeout(60);
-        try{
-            $poxy = requests::get($poxy_url);
-        }catch(Exception $e){
-            var_dump($e);
-            requests::$error;
+        requests::set_timeout(10);
+        $poxy = requests::get($poxy_url);
+        if (!$poxy) {
+            echo "GetIp Error ".date('Y-m-d H:i:s').":".PHP_EOL;
+            echo requests::$error.PHP_EOL;
+            requests::$error = '';
+            $poxy = '{"code":1}';
         }
-
         $poxy = json_decode($poxy);
     }while($poxy->code != 0);
     $ips = $poxy->data->ip . ":" . $poxy->data->port;
-
     return $ips;
 }
