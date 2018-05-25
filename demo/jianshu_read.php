@@ -128,19 +128,14 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
 
         requests::set_referer($key['referer']);//必须将referer调成当前页面
         requests::$error = '';
-        rePost:
         requests::post($ulas,json_encode($data));
         if(!empty(requests::$error)){
             echo "Post Error ".date('Y-m-d H:i:s').":".PHP_EOL;
             echo requests::$error.PHP_EOL;
             requests::$error = '';
-            $ip = getPoxyIp();
-            requests::set_proxy($ip);
-            goto rePost;
+        }else{
+            echo 'Success Post '.date('Y-m-d H:i:s').':'.PHP_EOL;
         }
-        echo 'Success Post '.date('Y-m-d H:i:s').':'.PHP_EOL;
-        $ip = isset($ip) ?: '127.0.0.1';
-        echo "Ip: $ip".PHP_EOL;
     }
     return $url;
 }
