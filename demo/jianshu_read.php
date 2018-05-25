@@ -44,8 +44,7 @@ if(!file_exists($file)) {
     $html = file_get_contents($file);
 }
 $result = selector::select($html,'//div[@class="content"]/a/@href');
-var_dump($result);
-exit;
+
 $readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
 $reads = [];
 for($i = 1;$i<count($readList);$i +=4){
@@ -63,8 +62,8 @@ $result = array_map(function ($e)use($referer,&$reads){
 },(array)$result);
 //玩下fork
 
-$num = 1;
-$runTimes = 1;
+$num = 4;
+$runTimes = 3400;
 if(count($result) < $num){
     $num = count($result);
 }
@@ -158,7 +157,7 @@ function getPoxyIp(){
         }
         $poxy = json_decode($poxy);
         sleep(rand(1,2));
-    }while(true);
+    }while($poxy->code != 0);
 
     $ips = $poxy->data->ip . ":" . $poxy->data->port;
     echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
