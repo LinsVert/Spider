@@ -12,7 +12,7 @@ include __DIR__."/../autoloader.php";
 use spider\core\requests;
 use spider\common\Config;
 use spider\common\db;
-
+//拉勾
 requests::set_referer(Config::referer);//referer
 requests::set_cookies(Config::cookie,Config::domain);
 requests::set_useragent(Config::useragent);
