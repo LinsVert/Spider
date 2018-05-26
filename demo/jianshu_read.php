@@ -30,9 +30,9 @@ $file = "temp.html";
 
 //临时解决方案
 if(!file_exists($file)) {
+    resend:
     $ips = getPoxyIp();
     echo $ips.PHP_EOL;
-    resend:
     requests::set_proxy($ips);
     requests::set_timeout(10);
     $html = requests::get($url);
@@ -41,7 +41,6 @@ if(!file_exists($file)) {
         $err = !$html ? "ip $ips abandon" : requests::$error;
         echo $err.PHP_EOL;
         requests::$error = '';
-        $ips = getPoxyIp();
         goto resend;
     }
     file_put_contents($file,$html);
