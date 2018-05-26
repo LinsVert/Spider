@@ -10,6 +10,7 @@
 include __DIR__."/../autoloader.php";
 use spider\core\requests;
 use spider\core\selector;
+use spider\common\iPool;
 
 $url = "https://www.jianshu.com/u/6b1fa1764b51";
 $referer = "https://www.jianshu.com";
@@ -21,20 +22,24 @@ requests::set_referer($referer);
 requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
+//fork num
+$num = 4;
+$runTimes = 3400;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
+
 //临时解决方案
 if(!file_exists($file)) {
     $ips = getPoxyIp();
+    echo $ips.PHP_EOL;
     resend:
     requests::set_proxy($ips);
+    requests::set_timeout(10);
     $html = requests::get($url);
-    var_dump(requests::$error);
     if (!empty(requests::$error) || !$html) {
         echo "Error " . date('Y-m-d H:i:s') . ": " . PHP_EOL;
         $err = !$html ? "ip $ips abandon" : requests::$error;
-        var_dump($err);
-        echo "*****" . PHP_EOL;
+        echo $err.PHP_EOL;
         requests::$error = '';
         $ips = getPoxyIp();
         goto resend;
@@ -44,7 +49,7 @@ if(!file_exists($file)) {
     $html = file_get_contents($file);
 }
 $result = selector::select($html,'//div[@class="content"]/a/@href');
-
+var_dump($result);exit;
 $readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
 $reads = [];
 for($i = 1;$i<count($readList);$i +=4){
@@ -61,13 +66,9 @@ $result = array_map(function ($e)use($referer,&$reads){
     return ['word'=>$word,'referer'=>$ref,'reads'=>array_pop($reads)];
 },(array)$result);
 //玩下fork
-
-$num = 4;
-$runTimes = 3400;
 if(count($result) < $num){
     $num = count($result);
 }
-var_dump($num);
 
 for ($i = 0;$i<$num;$i++){
 
@@ -88,7 +89,7 @@ for ($i = 0;$i<$num;$i++){
             $url = toSee($i,$result,$num,$ips);
             file_put_contents('debug.json',json_encode($url).PHP_EOL,FILE_APPEND);
 
-            sleep(rand(1,1));
+            sleep(1);
         }
         echo $pid."*$i run finished ".date('Y-m-d H:i:s').PHP_EOL;
         exit;
@@ -140,22 +141,36 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
     return $url;
 }
 function getPoxyIp(){
-    do{
-        $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
-        requests::set_timeout(20);
-        $poxy = requests::get($poxy_url);
-        if (!$poxy) {
-            echo "GetIp Error ".date('Y-m-d H:i:s').":".PHP_EOL;
-            echo requests::$error.PHP_EOL;
-            requests::$error = '';
-            $poxy = '{"code":1}';
-        }
-        $poxy = json_decode($poxy);
-        sleep(rand(1,2));
-    }while($poxy->code != 0);
+//    $num = 0;
+//    do{
+//        $num ++;
+//        $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
+//        requests::set_timeout(20);
+//        $poxy = requests::get($poxy_url);
+//        if (!$poxy) {
+//            echo "GetIp Error ".date('Y-m-d H:i:s').":".PHP_EOL;
+//            echo requests::$error.PHP_EOL;
+//            requests::$error = '';
+//            $poxy = '{"code":1}';
+//        }
+//        $poxy = json_decode($poxy);
+//        sleep(rand(1,2));
+//    }while($poxy->code != 0 && $num<=5);
+//    //5次循环失败就换代理网站
+//
+//
+//    $ips = $poxy->data->ip . ":" . $poxy->data->port;
+//    echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
+//    echo $ips.PHP_EOL;
+    $iPool = new iPool();
+    reTry:
+    $ip = $iPool->get66Ip(1);
+    if(!$ip){
 
-    $ips = $poxy->data->ip . ":" . $poxy->data->port;
-    echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
-    echo $ips.PHP_EOL;
-    return $ips;
+        $ip = $iPool->getjxlIp();
+        if(!$ip){
+            goto reTry;
+        }
+    }
+    return $ip[0];
 }
