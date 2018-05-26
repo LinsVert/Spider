@@ -23,11 +23,10 @@ requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
 //fork num
-$num = 4;
-$runTimes = 3400;
+$num = 1;
+$runTimes = 1;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
-
 //临时解决方案
 if(!file_exists($file)) {
     resend:
@@ -48,7 +47,7 @@ if(!file_exists($file)) {
     $html = file_get_contents($file);
 }
 $result = selector::select($html,'//div[@class="content"]/a/@href');
-var_dump($result);exit;
+
 $readList = selector::select($html,"//div[@class='meta']/a/text()");//拿阅读量 todo
 $reads = [];
 for($i = 1;$i<count($readList);$i +=4){
@@ -83,12 +82,17 @@ for ($i = 0;$i<$num;$i++){
         pcntl_signal_dispatch();
 
     }elseif(0 == $pid){
-        $time = time() + $runTimes;
-        while(time() < $time){
-            $url = toSee($i,$result,$num,$ips);
-            file_put_contents('debug.json',json_encode($url).PHP_EOL,FILE_APPEND);
 
-            sleep(1);
+        $ips = getPoxyIp();
+        $time = time() + $runTimes;
+        echo $ips.PHP_EOL;
+        while(time() < $time){
+            $flag = toSee($i,$result,$num,$ips);
+            if(!$flag){
+                $ips = getPoxyIp();
+            }else{
+                file_put_contents('debug.json','Ip: '.date('Y-m-d H:i:s').$ips.' Success!'.PHP_EOL,FILE_APPEND);
+            }
         }
         echo $pid."*$i run finished ".date('Y-m-d H:i:s').PHP_EOL;
         exit;
@@ -97,47 +101,48 @@ for ($i = 0;$i<$num;$i++){
     }
 }
 function toSee(int $i,array $result,int $num,string $ip = ""){
+
     $referer = "https://www.jianshu.com/u/6b1fa1764b51";
     $url = [];
     do{
         $url[] = $result[$i];
         $i = $i+$num;
     }while(isset($result[$i]));
-
-
+    requests::set_proxy($ip);
+    requests::set_timeout(10);
     foreach ($url as $key) {
         $ulas = "https://www.jianshu.com/notes/%s/mark_viewed.json";
         $res = requests::get($key['referer']);
-
+        if(!$res){
+            return false;
+        }
         $path = "/html/body/script[1]/text()";
 
         $ress = selector::select($res,$path);
         $ress = json_decode($ress);
-
+        if(!$ress){
+            return false;
+        }
         $data = [
             "referer" => $referer,
             'uuid' => $ress->note_show->uuid
         ];
         $ulas = sprintf($ulas,$key['word']);
-       // echo $ulas.PHP_EOL;
-        //requests::$error = '';
-        //resend:
 
-        requests::set_timeout(10);
-        //requests::set_proxy($ip);
-
-        requests::set_referer($key['referer']);//必须将referer调成当前页面
         requests::$error = '';
+        requests::set_referer($key['referer']);//必须将referer调成当前页面
         requests::post($ulas,json_encode($data));
         if(!empty(requests::$error)){
             echo "Post Error ".date('Y-m-d H:i:s').":".PHP_EOL;
             echo requests::$error.PHP_EOL;
             requests::$error = '';
+            return false;
         }else{
             echo 'Success Post '.date('Y-m-d H:i:s').':'.PHP_EOL;
         }
     }
-    return $url;
+
+    return true;
 }
 function getPoxyIp(){
 //    $num = 0;

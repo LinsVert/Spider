@@ -23,6 +23,7 @@ class iPool
         $num = 0;
         do{
             $num++;
+            requests::set_timeout(10);
             $html = requests::get($url);
             $ips = $this->preIp($html);
         }while(!$ips && $num<=5);
@@ -33,7 +34,7 @@ class iPool
         $num = 0;
         do{
             $num ++;
-
+            requests::$error = '';
             requests::set_timeout(20);
             $poxy = requests::get($url);
             if (!$poxy) {
@@ -41,11 +42,13 @@ class iPool
             }
             $poxy = json_decode($poxy);
             sleep(1);
-        }while($poxy->code != 0 && $num<=5);
+        }while(!empty(requests::$error) && $num<=5);
         if ($poxy->code !=0){
             return false;
         }else {
-            $ips = $poxy->data->ip . ":" . $poxy->data->port;
+            if(isset($poxy->data->ip) && isset($poxy->data->port))
+                $ips = $poxy->data->ip . ":" . $poxy->data->port;
+            else return false;
             return [$ips];
         }
     }
