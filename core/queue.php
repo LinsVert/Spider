@@ -13,7 +13,7 @@
 // PHPSpider Redis操作类文件
 //----------------------------------
 
-namespace phpspider\core;
+namespace spider\core;
 
 use Redis;
 use Exception;
@@ -96,6 +96,11 @@ class queue
         }
     }
 
+    /**
+     * @param $link_name
+     * @param array $config
+     * @throws Exception
+     */
     public static function set_connect($link_name, $config = array())
     {
         self::$link_name = $link_name;
@@ -120,6 +125,9 @@ class queue
         //}
     }
 
+    /**
+     * @throws Exception
+     */
     public static function set_connect_default()
     {
         $config = self::_get_default_config();
@@ -149,7 +157,7 @@ class queue
      * @param mixed $key    键
      * @param mixed $value  值
      * @param int $expire   过期时间，单位：秒
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -192,7 +200,7 @@ class queue
      * @param mixed $key    键
      * @param mixed $value  值
      * @param int $expire   过期时间，单位：秒
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -241,7 +249,7 @@ class queue
      * @param mixed $value  锁的值,貌似没啥意义
      * @param int $expire   当前锁的最大生存时间(秒)，必须大于0，超过生存时间系统会自动强制释放锁
      * @param int $interval   获取锁失败后挂起再试的时间间隔(微秒)
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2016-10-30 23:56
      */
@@ -296,7 +304,7 @@ class queue
      * get
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -329,7 +337,7 @@ class queue
      * del 删除数据
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -362,7 +370,7 @@ class queue
      * type 返回值的类型
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -407,7 +415,7 @@ class queue
      * 
      * @param mixed $key
      * @param int $integer
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -448,7 +456,7 @@ class queue
      * 
      * @param mixed $key
      * @param int $integer
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -489,7 +497,7 @@ class queue
      * 
      * @param mixed $key
      * @param mixed $value
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -524,7 +532,7 @@ class queue
      * @param mixed $key
      * @param mixed $start
      * @param mixed $end
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -557,7 +565,7 @@ class queue
      * select 按索引查询
      * 
      * @param mixed $index
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -588,9 +596,7 @@ class queue
 
     /**
      * dbsize 返回当前数据库中key的数目
-     * 
-     * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -622,7 +628,7 @@ class queue
     /**
      * flushdb 删除当前选择数据库中的所有key
      * 
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -654,7 +660,7 @@ class queue
     /**
      * flushall 删除所有数据库中的所有key
      * 
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -687,7 +693,7 @@ class queue
      * save 将数据保存到磁盘
      * 
      * @param mixed $is_bgsave 将数据异步保存到磁盘
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -726,7 +732,7 @@ class queue
     /**
      * info 提供服务器的信息和统计
      * 
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -757,9 +763,11 @@ class queue
 
     /**
      * slowlog 慢查询日志
-     * 
-     * @return void
-     * @author seatle <seatle@foxmail.com> 
+     *
+     * @param string $command
+     * @param int $len
+     * @return string
+     * @author seatle <seatle@foxmail.com>
      * @created time :2015-12-18 11:28
      */
     public static function slowlog($command = 'get', $len = 0)
@@ -771,11 +779,11 @@ class queue
             {
                 if (!empty($len)) 
                 {
-                    return $redis->slowlog($command, $len);
+                    return self::slowlog($command, $len);
                 }
                 else 
                 {
-                    return $redis->slowlog($command);
+                    return self::slowlog($command);
                 }
             }
         }
@@ -797,7 +805,7 @@ class queue
     /**
      * lastsave 返回上次成功将数据保存到磁盘的Unix时戳
      * 
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-18 11:28
      */
@@ -831,7 +839,7 @@ class queue
      * 
      * @param mixed $key
      * @param mixed $value
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -865,7 +873,7 @@ class queue
      * 
      * @param mixed $key
      * @param mixed $value
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -898,7 +906,7 @@ class queue
      * lpop 从左边弹出数据, 并删除数据
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -931,7 +939,7 @@ class queue
      * rpop 从右边弹出数据, 并删除数据
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -964,7 +972,7 @@ class queue
      * lsize 队列长度，同llen
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -998,7 +1006,7 @@ class queue
      * 
      * @param mixed $key
      * @param int $index
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1033,7 +1041,7 @@ class queue
      * @param mixed $key
      * @param mixed $start
      * @param mixed $end
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1067,7 +1075,7 @@ class queue
      * 
      * @param mixed $key
      * @param mixed $length
-     * @return void
+     * @return array
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1102,7 +1110,7 @@ class queue
      * keys
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      * 查找符合给定模式的key。
@@ -1144,7 +1152,7 @@ class queue
      * -1：永不超时
      * -2：key不存在
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1178,7 +1186,7 @@ class queue
      * 
      * @param mixed $key
      * @param mixed $expire
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1211,7 +1219,7 @@ class queue
      * exists key值是否存在
      * 
      * @param mixed $key
-     * @return void
+     * @return string
      * @author seatle <seatle@foxmail.com> 
      * @created time :2015-12-13 01:05
      */
@@ -1242,9 +1250,10 @@ class queue
 
     /**
      * ping 检查当前redis是否存在且是否可以连接上
-     * 
-     * @return void
-     * @author seatle <seatle@foxmail.com> 
+     *
+     * @param $value
+     * @return string
+     * @author seatle <seatle@foxmail.com>
      * @created time :2015-12-13 01:05
      */
     //protected static function ping()

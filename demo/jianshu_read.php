@@ -10,8 +10,16 @@
 include __DIR__."/../autoloader.php";
 use spider\core\requests;
 use spider\core\selector;
-use spider\common\iPool;
-
+use spider\core\queue;
+use spider\common\common;
+$redisKey = 'iPool';
+try {
+    queue::set_connect('default', common::REDIS_CONFIG);
+} catch (Exception $e) {
+    echo $e;
+    exit;
+}
+$redisLength = queue::lsize($redisKey);
 $url = "https://www.jianshu.com/u/6b1fa1764b51";
 $referer = "https://www.jianshu.com";
 $urll = "https://www.jianshu.com/p/26c2eca28dc5";
@@ -24,13 +32,14 @@ requests::set_cookie($referer,$cookie);
 requests::set_useragent($userAgent);
 //fork num
 $num = 1;
-$runTimes = 1;
+$runTimes = 60;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
 //临时解决方案
 if(!file_exists($file)) {
+    $index = 0;
     resend:
-    $ips = getPoxyIp();
+    $ips = getPoxyIp($redisKey,$index);
     echo $ips.PHP_EOL;
     requests::set_proxy($ips);
     requests::set_timeout(10);
@@ -40,9 +49,11 @@ if(!file_exists($file)) {
         $err = !$html ? "ip $ips abandon" : requests::$error;
         echo $err.PHP_EOL;
         requests::$error = '';
+        $index++;
         goto resend;
     }
     file_put_contents($file,$html);
+    echo 'Create Success!';
 }else {
     $html = file_get_contents($file);
 }
@@ -83,13 +94,16 @@ for ($i = 0;$i<$num;$i++){
 
     }elseif(0 == $pid){
 
-        $ips = getPoxyIp();
+        $ips = getPoxyIp($redisKey,0);
         $time = time() + $runTimes;
         echo $ips.PHP_EOL;
+        $indexs = 0;
         while(time() < $time){
+
             $flag = toSee($i,$result,$num,$ips);
             if(!$flag){
-                $ips = getPoxyIp();
+                $indexs++;
+                $ips = getPoxyIp($redisKey,$indexs);
             }else{
                 file_put_contents('debug.json','Ip: '.date('Y-m-d H:i:s').$ips.' Success!'.PHP_EOL,FILE_APPEND);
             }
@@ -112,8 +126,10 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
     requests::set_timeout(10);
     foreach ($url as $key) {
         $ulas = "https://www.jianshu.com/notes/%s/mark_viewed.json";
+
         $res = requests::get($key['referer']);
         if(!$res){
+            echo "拿不到文章详细";
             return false;
         }
         $path = "/html/body/script[1]/text()";
@@ -128,7 +144,7 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
             'uuid' => $ress->note_show->uuid
         ];
         $ulas = sprintf($ulas,$key['word']);
-
+        echo $ulas;
         requests::$error = '';
         requests::set_referer($key['referer']);//必须将referer调成当前页面
         requests::post($ulas,json_encode($data));
@@ -144,37 +160,22 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
 
     return true;
 }
-function getPoxyIp(){
-//    $num = 0;
-//    do{
-//        $num ++;
-//        $poxy_url = "http://ip.jiangxianli.com/api/proxy_ip";
-//        requests::set_timeout(20);
-//        $poxy = requests::get($poxy_url);
-//        if (!$poxy) {
-//            echo "GetIp Error ".date('Y-m-d H:i:s').":".PHP_EOL;
-//            echo requests::$error.PHP_EOL;
-//            requests::$error = '';
-//            $poxy = '{"code":1}';
-//        }
-//        $poxy = json_decode($poxy);
-//        sleep(rand(1,2));
-//    }while($poxy->code != 0 && $num<=5);
-//    //5次循环失败就换代理网站
-//
-//
-//    $ips = $poxy->data->ip . ":" . $poxy->data->port;
-//    echo "GetIp Success ".date('Y-m-d H:i:s').":".PHP_EOL;
-//    echo $ips.PHP_EOL;
-    $iPool = new iPool();
-    reTry:
-    $ip = $iPool->get66Ip(1);
-    if(!$ip){
+function getPoxyIp($redisKey,$index = 0){
 
-        $ip = $iPool->getjxlIp();
-        if(!$ip){
-            goto reTry;
-        }
+//    $iPool = new iPool();
+//    reTry:
+//    $ip = $iPool->get66Ip(1);
+//    if(!$ip){
+//
+//        $ip = $iPool->getjxlIp();
+//        if(!$ip){
+//            goto reTry;
+//        }
+//    }
+//    return $ip[0];
+    $ip = queue::lget($redisKey,$index);
+    if($ip == 'nil'){
+        $ip =  queue::lget($redisKey,$index-1);
     }
-    return $ip[0];
+    return $ip;
 }
