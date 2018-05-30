@@ -31,8 +31,8 @@ requests::set_cookie($referer,$cookie);
 
 requests::set_useragent($userAgent);
 //fork num
-$num = 1;
-$runTimes = 60;
+$num = 4;
+$runTimes = 3400;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
 //临时解决方案
@@ -104,6 +104,7 @@ for ($i = 0;$i<$num;$i++){
             if(!$flag){
                 $indexs++;
                 $ips = getPoxyIp($redisKey,$indexs);
+                echo 'New Ip'.$ips.PHP_EOL;
             }else{
                 file_put_contents('debug.json','Ip: '.date('Y-m-d H:i:s').$ips.' Success!'.PHP_EOL,FILE_APPEND);
             }
@@ -129,7 +130,8 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
 
         $res = requests::get($key['referer']);
         if(!$res){
-            echo "拿不到文章详细";
+            echo $key['referer'].PHP_EOL;
+            echo "拿不到文章详细".PHP_EOL;
             return false;
         }
         $path = "/html/body/script[1]/text()";
