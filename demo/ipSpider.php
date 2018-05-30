@@ -37,6 +37,11 @@ try {
 }
 $iPool = new iPool();
 $forkNum = (int)count($iPool::ips);
+$redisLen = queue::lsize($redisKey);
+if ($redisLen < 1000){
+   echo 'Redis length more than 1000 not need ips Times:'.date('Y-m-d H:i:s').PHP_EOL;
+   exit;
+}
 for ($i = 0;$i<$forkNum;$i++) {
     fork_one_task($i,$iPool,$redisKey);
 }
@@ -76,7 +81,10 @@ function fork_one_task($i,iPool $iPool,$redisKey){
             $ips = check_ip($ips);
             //遍历push
             array_walk($ips,function ($value)use($redisKey){
-                queue::rpush($redisKey,$value);
+                $redisLen = queue::lsize($redisKey);
+                if ($redisLen < 1000){
+                    queue::rpush($redisKey,$value);
+                }
             });
         }
         echo "Pid ".posix_getpid()." run finished".PHP_EOL;
