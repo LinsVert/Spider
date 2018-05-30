@@ -97,12 +97,12 @@ for ($i = 0;$i<$num;$i++){
         $ips = getPoxyIp($redisKey,0);
         $time = time() + $runTimes;
         echo $ips.PHP_EOL;
-        $indexs = 0;
+        $indexs = $redisLength;
         while(time() < $time){
 
             $flag = toSee($i,$result,$num,$ips);
             if(!$flag){
-                $indexs++;
+                $indexs--;
                 $ips = getPoxyIp($redisKey,$indexs);
                 echo 'New Ip'.$ips.PHP_EOL;
             }else{
