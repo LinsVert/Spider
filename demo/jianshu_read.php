@@ -137,7 +137,6 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
        $path = "//script[@type='application/json']/text()";
 
         $ress = selector::select($res,$path);
-        echo 'ress is '.$ress.PHP_EOL;
         $ress = json_decode($ress);
 
         if(!$ress){
