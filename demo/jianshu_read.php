@@ -32,7 +32,7 @@ requests::set_cookie($referer,$cookie);
 requests::set_useragent($userAgent);
 //fork num
 $num = 1;
-$runTimes = 600;
+$runTimes = 300;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
 //临时解决方案
@@ -104,7 +104,7 @@ for ($i = 0;$i<$num;$i++){
             if(!$flag){
                 $indexs--;
                 $ips = getPoxyIp($redisKey,$indexs);
-                echo 'New Ip'.$ips.PHP_EOL;
+                echo 'New Ip : '.$ips.PHP_EOL;
             }else{
                 file_put_contents('debug.json','Ip: '.date('Y-m-d H:i:s').$ips.' Success!'.PHP_EOL,FILE_APPEND);
             }
@@ -116,7 +116,7 @@ for ($i = 0;$i<$num;$i++){
     }
 }
 function toSee(int $i,array $result,int $num,string $ip = ""){
-
+    echo 'Ip in toSee function.'.$ip.PHP_EOL;
     $referer = "https://www.jianshu.com/u/6b1fa1764b51";
     $url = [];
     do{
@@ -137,8 +137,11 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
         $path = "/html/body/script[1]/text()";
 
         $ress = selector::select($res,$path);
+        echo 'ress is '.$ress.PHP_EOL;
         $ress = json_decode($ress);
+
         if(!$ress){
+            echo 'do not select detail!!!!'.PHP_EOL;
             return false;
         }
         $data = [
@@ -166,7 +169,7 @@ function getPoxyIp($redisKey,$index = 0){
     re:
     $ip = queue::lpop($redisKey);
     if($ip == 'nil'){
-        $ip =  queue::lpop($redisKey);
+        exit('none');
     }
     $ip = check_ip([$ip]);
     if(!$ip){
@@ -177,7 +180,7 @@ function getPoxyIp($redisKey,$index = 0){
     return $ip[0];
 }
 function check_ip($ips){
-    $requestUrl = "http://www.ip138.com/";
+    $requestUrl = "https://www.jianshu.com";
     $userAgent = [
         "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
         "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Acoo Browser; SLCC1; .NET CLR 2.0.50727; Media Center PC 5.0; .NET CLR 3.0.04506)",
