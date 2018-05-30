@@ -32,7 +32,7 @@ requests::set_cookie($referer,$cookie);
 requests::set_useragent($userAgent);
 //fork num
 $num = 4;
-$runTimes = 3400;
+$runTimes = 540;
 //拿列表页会被封，需要代理下
 $file = "temp.html";
 //临时解决方案
