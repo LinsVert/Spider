@@ -134,7 +134,7 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
             echo "拿不到文章详细".PHP_EOL;
             return false;
         }
-        $path = "/html/body/script[1]/text()";
+       $path = "//script[@type='application/json']/text()";
 
         $ress = selector::select($res,$path);
         echo 'ress is '.$ress.PHP_EOL;
