@@ -38,7 +38,7 @@ try {
 $iPool = new iPool();
 $forkNum = (int)count($iPool::ips);
 $redisLen = queue::lsize($redisKey);
-if ($redisLen < 1000){
+if ($redisLen < 666){
    echo 'Redis length more than 1000 not need ips Times:'.date('Y-m-d H:i:s').PHP_EOL;
    exit;
 }
@@ -82,7 +82,7 @@ function fork_one_task($i,iPool $iPool,$redisKey){
             //遍历push
             array_walk($ips,function ($value)use($redisKey){
                 $redisLen = queue::lsize($redisKey);
-                if ($redisLen < 1000){
+                if ($redisLen < 666){
                     queue::rpush($redisKey,$value);
                 }
             });
