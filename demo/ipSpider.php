@@ -38,7 +38,7 @@ try {
 $iPool = new iPool();
 $forkNum = (int)count($iPool::ips);
 $redisLen = queue::lsize($redisKey);
-if ($redisLen < 666){
+if ($redisLen > 666){
    echo 'Redis length more than 1000 not need ips Times:'.date('Y-m-d H:i:s').PHP_EOL;
    exit;
 }
