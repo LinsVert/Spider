@@ -20,6 +20,10 @@ try {
     exit;
 }
 $redisLength = queue::lsize($redisKey);
+if($redisLength < 25){
+    echo 'Ip 容量不够'.PHP_EOL;
+    exit;
+}
 $url = "https://www.jianshu.com/u/6b1fa1764b51";
 $referer = "https://www.jianshu.com";
 $urll = "https://www.jianshu.com/p/26c2eca28dc5";
@@ -40,6 +44,9 @@ if(!file_exists($file)) {
     $index = 0;
     resend:
     $ips = getPoxyIp($redisKey,$index);
+    if(!$ips){
+        exit('IPS is not enable');
+    }
     echo $ips.PHP_EOL;
     requests::set_proxy($ips);
     requests::set_timeout(10);
@@ -95,6 +102,11 @@ for ($i = 0;$i<$num;$i++){
     }elseif(0 == $pid){
 
         $ips = getPoxyIp($redisKey,0);
+        if(!$ips){
+           echo 'IPS is not enable'.PHP_EOL;
+           posix_kill(getmypid (),SIGTERM);
+
+        }
         $time = time() + $runTimes;
         echo $ips.PHP_EOL;
         $indexs = $redisLength;
@@ -104,6 +116,11 @@ for ($i = 0;$i<$num;$i++){
             if(!$flag){
                 $indexs--;
                 $ips = getPoxyIp($redisKey,$indexs);
+                if(!$ips){
+                    echo 'IPS is not enable'.PHP_EOL;
+                    posix_kill(getmypid (),SIGTERM);
+
+                }
                 echo 'New Ip : '.$ips.PHP_EOL;
             }else{
                 file_put_contents('debug.json','Ip: '.date('Y-m-d H:i:s').$ips.' Success!'.PHP_EOL,FILE_APPEND);
@@ -165,6 +182,10 @@ function toSee(int $i,array $result,int $num,string $ip = ""){
     return true;
 }
 function getPoxyIp($redisKey,$index = 0){
+    $len = queue::lsize($redisKey);
+    if($len == 0){
+        return false;
+    }
     re:
     $ip = queue::lpop($redisKey);
     if($ip == 'nil'){
